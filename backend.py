@@ -4,6 +4,7 @@ from datetime import datetime, timedelta, timezone
 from io import BytesIO
 from typing import Any
 
+import certifi
 import jwt
 from dotenv import load_dotenv
 from fastapi import Depends, FastAPI, File, Form, HTTPException, UploadFile, status
@@ -23,14 +24,14 @@ security = HTTPBearer()
 
 SECRET_KEY = os.getenv("JWT_SECRET_KEY", secrets.token_urlsafe(32))
 TOKEN_TTL_HOURS = int(os.getenv("TOKEN_TTL_HOURS", "24"))
-streamlit_url = os.getenv("STREAMLIT_URL", "*")
+streamlit_url = os.getenv("STREAMLIT_URL", "http://localhost:8501")
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=[streamlit_url, "*"],
     allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
+    allow_methods=["GET", "POST", "PUT", "DELETE"],
+    allow_headers=["Authorization", "Content-Type"],
 )
 
 MONGO_URI = os.getenv("MONGO_URI")
@@ -41,7 +42,13 @@ resume_collection = None
 
 if MONGO_URI:
     try:
-        mongo_client = MongoClient(MONGO_URI, serverSelectionTimeoutMS=5000)
+        # Initialized with certifi TLS CA bundle to fix SSL handshake errors on Render/Linux
+        mongo_client = MongoClient(
+            MONGO_URI,
+            serverSelectionTimeoutMS=5000,
+            tls=True,
+            tlsCAFile=certifi.where()
+        )
         mongo_db = mongo_client[os.getenv("MONGO_DATABASE", "resume_db")]
         user_collection = mongo_db["users"]
         resume_collection = mongo_db["resumes"]
@@ -137,7 +144,7 @@ def improve_resume(resume_text: str, job_role: str) -> str:
     base_url = os.getenv("OPENAI_BASE_URL")
     try:
         client = OpenAI(api_key=api_key, base_url=base_url if base_url else None)
-        model = os.getenv("OPENAI_MODEL", "openai/gpt-oss-120b")
+        model = os.getenv("OPENAI_MODEL", "gpt-4o-mini")
 
         response = client.chat.completions.create(
             model=model,
