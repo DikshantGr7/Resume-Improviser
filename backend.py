@@ -23,14 +23,14 @@ security = HTTPBearer()
 
 SECRET_KEY = os.getenv("JWT_SECRET_KEY", secrets.token_urlsafe(32))
 TOKEN_TTL_HOURS = int(os.getenv("TOKEN_TTL_HOURS", "24"))
-streamlit_url = os.getenv("STREAMLIT_URL", "http://localhost:8501")
+streamlit_url = os.getenv("STREAMLIT_URL", "*")
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[streamlit_url, "*"],
+    allow_origins=["*"],
     allow_credentials=True,
-    allow_methods=["GET", "POST", "PUT", "DELETE"],
-    allow_headers=["Authorization", "Content-Type"],
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
 
 MONGO_URI = os.getenv("MONGO_URI")
@@ -137,7 +137,7 @@ def improve_resume(resume_text: str, job_role: str) -> str:
     base_url = os.getenv("OPENAI_BASE_URL")
     try:
         client = OpenAI(api_key=api_key, base_url=base_url if base_url else None)
-        model = os.getenv("OPENAI_MODEL", "gpt-4o-mini")
+        model = os.getenv("OPENAI_MODEL", "openai/gpt-oss-120b")
 
         response = client.chat.completions.create(
             model=model,
