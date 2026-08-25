@@ -12,20 +12,20 @@ def setting(name: str, default: str = "") -> str:
     if value:
         return value
     try:
-        return str(st.secrets.get(name, default))
+        if name in st.secrets:
+            return str(st.secrets[name])
+        return default
     except (FileNotFoundError, KeyError):
         return default
 
 
-API_URL = setting("API_URL", "http://localhost:8000").rstrip("/")
+API_URL = setting("BACKEND_URL", setting("API_URL", "http://localhost:8000")).rstrip("/")
 
 st.set_page_config(page_title="Resume Improviser", page_icon="📝", layout="wide")
 
-# High-contrast styling + transition lock to prevent flashing/dimming
 st.markdown(
     """
 <style>
-/* Disable flashing/dimming animation on rerun */
 div[data-testid="stAppViewContainer"], .main, [data-testid="stHeader"] {
     transition: none !important;
     animation: none !important;
@@ -191,7 +191,6 @@ def workspace():
         st.session_state.resume_id = None
         return
 
-    # Direct Role Update Form to retain context without extra page refresh
     with st.form("role_form"):
         role_col, btn_col = st.columns([4, 1])
         with role_col:
