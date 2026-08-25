@@ -1,0 +1,11 @@
+fastapi
+uvicorn[standard]
+python-multipart
+PyPDF2
+pymongo
+openai
+PyJWT
+passlib
+python-dotenv
+streamlit
+requests
